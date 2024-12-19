@@ -2,14 +2,15 @@
 
 set -euo pipefail
 
-: "${REPO:?Need to set REPO}"
 : "${CATALOG_DIR:?Need to set CATALOG_DIR}"
 : "${OPERATORS_DIR:?Need to set OPERATORS_DIR}"
+: "${REPO:?Need to set REPO}"
 : "${KPM_PACKAGES:?Need to set KPM_PACKAGES. Use 'KPM_PACKAGES=ALL' to rebuild the entire catalog}"
 
-repo="${REPO}"
+mkdir -p ${CATALOG_DIR}
 catalogDir=$(cd "${CATALOG_DIR}" && pwd)
 operatorsDir=$(cd "${OPERATORS_DIR}" && pwd)
+repo="${REPO}"
 
 kpmSpecDir="kpmspecs"
 kpmDir="kpms"

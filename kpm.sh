@@ -17,7 +17,7 @@ catalogTag="${CATALOG_TAG}"
 kpmSpecDir="kpmspecs"
 kpmDir="kpms"
 
-if [[ "$KPM_PACKAGES" == "CHANGED" ]] then
+if [[ "$KPM_PACKAGES" == "CHANGED" ]]; then
 	: "${SINCE_COMMIT:?Need to set SINCE_COMMIT}"
 	sinceCommit="${SINCE_COMMIT}"
 	packages=$(cd $operatorsDir && git diff --name-only $sinceCommit | grep '^operators/' | cut -d'/' -f2 | sort | uniq)

@@ -64,4 +64,4 @@ jobs:
       - if: steps.cache.outputs.cache-hit != 'true'
         run: echo "KPM_PACKAGES=ALL" >> $GITHUB_ENV        
 
-      - run: (cd ./community-operators-pipeline && ./kpm.sh)
+      - run: ./community-operators-pipeline/kpm.sh

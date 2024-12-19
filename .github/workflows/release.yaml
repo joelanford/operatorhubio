@@ -12,10 +12,13 @@ jobs:
 
     env:
       GO_VERSION: 1.23
-      REGISTRY: ghcr.io
-      REPO: ${{ github.repository }}
       BRANCH_NAME: ${{ github.ref_name }}
       CACHE_KEY: catalogs-${{ github.ref_name }}
+
+      REPO: ghcr.io/${{ github.repository }}
+      CATALOG_DIR: catalog
+      OPERATORS_DIR: community-operators/operators
+
 
     steps:
       - name: Checkout code
@@ -53,10 +56,11 @@ jobs:
           key: ${{ env.CACHE_KEY }}
 
       - if: steps.cache.outputs.cache-hit == 'true'
-        run: echo "KPM_PACKAGES=CHANGED" >> $GITHUB_ENV
+        run: |
+          echo "KPM_PACKAGES=CHANGED" >> $GITHUB_ENV
+          echo "SINCE_COMMIT=$(cat $CATALOG_DIR/commit)" >> $GITHUB_ENV
           
       - if: steps.cache.outputs.cache-hit != 'true'
         run: echo "KPM_PACKAGES=ALL" >> $GITHUB_ENV        
 
-      - run: find .
-      - run: export
+      - run: ./community-operators-pipeline/kpm.sh

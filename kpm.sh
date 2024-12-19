@@ -1,30 +1,34 @@
 #!/usr/bin/env bash
 
-registryNamespace="quay.io/operatorhubio-jwl"
+set -euo pipefail
+
+: "${REPO:?Need to set REPO}"
+: "${CATALOG_DIR:?Need to set CATALOG_DIR}"
+: "${OPERATORS_DIR:?Need to set OPERATORS_DIR}"
+: "${KPM_PACKAGES:?Need to set KPM_PACKAGES. Use 'KPM_PACKAGES=ALL' to rebuild the entire catalog}"
+
+repo="${REPO}"
+catalogDir=$(cd "${CATALOG_DIR}" && pwd)
+operatorsDir=$(cd "${OPERATORS_DIR}" && pwd)
 
 kpmSpecDir="kpmspecs"
 kpmDir="kpms"
-catalogDir="catalog"
+
 catalogTag=$(git branch --show-current)
 if [[ $catalogTag == "main" ]]; then
 	catalogTag="latest"
 fi
 
-if [[ "$KPM_PACKAGES" == "" ]]; then
-	echo "KPM_PACKAGES must be set. Use 'KPM_PACKAGES=ALL' to rebuild the entire repo."
-	exit 1
-elif [[ "$KPM_PACKAGES" == "CHANGED" ]] then
-	packages=$(git diff --name-only HEAD~  | grep '^operators/' | cut -d'/' -f2 | sort | uniq)
+if [[ "$KPM_PACKAGES" == "CHANGED" ]] then
+	: "${SINCE_COMMIT:?Need to set SINCE_COMMIT}"
+	sinceCommit="${SINCE_COMMIT}"
+	packages=$(cd $operatorsDir && git diff --name-only $sinceCommit | grep '^operators/' | cut -d'/' -f2 | sort | uniq)
 elif [[ "$KPM_PACKAGES" == "ALL" ]]; then
-        rm -rf $kpmSpecDir
-        rm -rf $kpmDir
-        rm -rf $catalogDir
-	packages=$(find operators -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | sort)
+	packages=$(find $operatorsDir -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | sort)
 else
-	packages=${KPM_PACKAGE}
+	packages=${KPM_PACKAGES}
 fi
 
-count=0
 for p in $packages; do
 	mkdir -p $kpmSpecDir && rm -rf $kpmSpecDir/$p*
 	mkdir -p $kpmDir     && rm -rf $kpmDir/$p*
@@ -36,36 +40,28 @@ for p in $packages; do
 apiVersion: specs.kpm.io/v1
 kind: Catalog
 
-registryNamespace: $registryNamespace
-name: $p-catalog
-tag: $catalogTag
-
+imageReference: $repo:$p-catalog-$catalogTag
 cacheFormat: none
-
 source:
   sourceType: legacy
   legacy:
-    bundleRoot: ../operators/$p
-    bundleRegistryNamespace: $registryNamespace
+    bundleRoot: $operatorsDir/$p
+    bundleImageReference: $repo:$p-bundle-{.Version}
 
 EOF
 	kpm build catalog $specFile -o $kpmDir
-	
-	kpmFile=$(ls $kpmDir/$p-catalog-$catalogTag.catalog.kpm)
+
+	kpmFile=$(ls $kpmDir/$(basename "$repo")-$p-catalog-$catalogTag.catalog.kpm)
 
 	mkdir $catalogDir/$p
 	kpm render $kpmFile > $catalogDir/$p/catalog.json
-
-	((count=count+1))
 done
 
-cat << EOF > $kpmSpecDir/operatorhubio.catalog.kpmspec.yaml
+cat << EOF > $kpmSpecDir/catalog.kpmspec.yaml
 apiVersion: specs.kpm.io/v1
 kind: Catalog
 
-registryNamespace: $registryNamespace
-name: catalog
-tag: $catalogTag
+imageReference: $repo:$catalogTag
 
 cacheFormat: pogreb.v1
 migrationLevel: all
@@ -73,6 +69,6 @@ migrationLevel: all
 source:
   sourceType: fbc
   fbc:
-    catalogRoot: ../catalog
+    catalogRoot: $catalogDir
 EOF
-kpm build catalog $kpmSpecDir/operatorhubio.catalog.kpmspec.yaml -o $kpmDir
+kpm build catalog $kpmSpecDir/catalog.kpmspec.yaml -o $kpmDir

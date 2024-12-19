@@ -30,13 +30,19 @@ jobs:
           path: community-operators
           fetch-depth: 0
 
+      - name: Checkout kpm
+        uses: actions/checkout@v4
+        with:
+          repository: joelanford/kpm
+          path: kpm
+
       - name: Setup Go environment
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Install KPM
-        run: go install github.com/joelanford/kpm@latest
+        run: (cd kpm && make install)
           
       - name: Cache
         id: cache

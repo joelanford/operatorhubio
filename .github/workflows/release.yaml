@@ -16,6 +16,7 @@ jobs:
       CACHE_KEY: catalogs-${{ github.ref_name }}
 
       REPO: ghcr.io/${{ github.repository }}
+      CATALOG_TAG: latest
       CATALOG_DIR: catalog
       OPERATORS_DIR: community-operators/operators
 

@@ -28,6 +28,7 @@ jobs:
           path: community-operators-pipeline
 
       - name: Checkout community-operators
+        id: catalog-repo
         uses: actions/checkout@v4
         with:
           repository: k8s-operatorhub/community-operators
@@ -65,3 +66,4 @@ jobs:
         run: echo "KPM_PACKAGES=ALL" >> $GITHUB_ENV        
 
       - run: ./community-operators-pipeline/kpm.sh
+      - run: echo ${{ steps.catalog-repo.outputs.commit }} > ${{ env.CATALOG_DIR }}/commit

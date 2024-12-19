@@ -5,20 +5,17 @@ set -euo pipefail
 : "${CATALOG_DIR:?Need to set CATALOG_DIR}"
 : "${OPERATORS_DIR:?Need to set OPERATORS_DIR}"
 : "${REPO:?Need to set REPO}"
+: "${CATALOG_TAG:?Need to set CATALOG_TAG}"
 : "${KPM_PACKAGES:?Need to set KPM_PACKAGES. Use 'KPM_PACKAGES=ALL' to rebuild the entire catalog}"
 
 mkdir -p ${CATALOG_DIR}
 catalogDir=$(cd "${CATALOG_DIR}" && pwd)
 operatorsDir=$(cd "${OPERATORS_DIR}" && pwd)
 repo="${REPO}"
+catalogTag="${CATALOG_TAG}"
 
 kpmSpecDir="kpmspecs"
 kpmDir="kpms"
-
-catalogTag=$(git branch --show-current)
-if [[ $catalogTag == "main" ]]; then
-	catalogTag="latest"
-fi
 
 if [[ "$KPM_PACKAGES" == "CHANGED" ]] then
 	: "${SINCE_COMMIT:?Need to set SINCE_COMMIT}"

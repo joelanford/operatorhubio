@@ -6,7 +6,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '0 * * * *' # Runs hourly
+    - cron: '*/15 * * * *' # Runs every 15m
 
 jobs:
   run-kpm:
@@ -43,7 +43,7 @@ jobs:
       - name: Generate restore keys
         id: restore-keys
         run: |
-          (cd community-operators && git log HEAD~ -n 8 --pretty=format:"catalog-%H") > keys.txt
+          (cd community-operators && git log HEAD~ -n 9 --pretty=format:"catalog-%H") > keys.txt
           echo "keys<<EOF" >> $GITHUB_OUTPUT
           cat keys.txt >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
@@ -72,13 +72,11 @@ jobs:
           key: ${{ env.CACHE_KEY }}
           restore-keys: |
             ${{ steps.restore-keys.outputs.keys }}
-            catalogs-main
 
       - if: steps.cache-restore.outputs.cache-matched-key != ''
         run: |
           echo "KPM_PACKAGES=CHANGED" >> $GITHUB_ENV
           echo "SINCE_COMMIT=$(cat $CATALOG_DIR/commit)" >> $GITHUB_ENV
-          echo "/commit" >> ${{ env.CATALOG_DIR }}/.indexignore
           
       - if: steps.cache-restore.outputs.cache-matched-key == ''
         run: echo "KPM_PACKAGES=ALL" >> $GITHUB_ENV        
@@ -87,6 +85,7 @@ jobs:
         run: ./community-operators-pipeline/kpm.sh
 
       - name: Push updated artifacts to registry
+        id: push
         if: github.event_name == 'push' || github.event_name == 'schedule'
         run: |
           [[ ! -d "kpms" ]] && exit 0
@@ -94,14 +93,12 @@ jobs:
           echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           kpm push kpms/*.bundle.kpm
           kpm push kpms/*.catalog.kpm
-
-      - name: Write operators commit to catalog dir
-        run: |
           echo "/commit" >> ${{ env.CATALOG_DIR }}/.indexignore
           echo ${{ steps.catalog-repo.outputs.commit }} > ${{ env.CATALOG_DIR }}/commit
+          echo "saveCache=true" >> $GITHUB_OUTPUT
 
       - name: Save catalog updates
-        id: cache-save
+        if: steps.cache-restore.outputs.cache-hit != 'true' && steps.push.outputs.saveCache == 'true'
         uses: actions/cache/save@v4
         with:
           path: ${{ env.CATALOG_DIR }}

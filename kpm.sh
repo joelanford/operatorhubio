@@ -20,11 +20,16 @@ kpmDir="kpms"
 if [[ "$KPM_PACKAGES" == "CHANGED" ]]; then
 	: "${SINCE_COMMIT:?Need to set SINCE_COMMIT}"
 	sinceCommit="${SINCE_COMMIT}"
-	packages=$(cd $operatorsDir && git diff --name-only $sinceCommit | grep '^operators/' | cut -d'/' -f2 | sort | uniq)
+	packages=$((cd $operatorsDir && git diff --name-only $sinceCommit | grep '^operators/' | cut -d'/' -f2 | sort | uniq) || echo "")
 elif [[ "$KPM_PACKAGES" == "ALL" ]]; then
 	packages=$(find $operatorsDir -maxdepth 1 -mindepth 1 -type d -printf "%f\n" | sort)
 else
 	packages=${KPM_PACKAGES}
+fi
+
+if [[ "$packages" == "" ]]; then
+	echo "Nothing to do"
+	exit 0
 fi
 
 for p in $packages; do
@@ -34,6 +39,25 @@ for p in $packages; do
 
 	specFile="$kpmSpecDir/$p.catalog.kpmspec.yaml"
 	echo "creating $specFile"
+
+	if [[ "$repo" == ghcr.io* ]]; then
+	cat << EOF > $specFile
+apiVersion: specs.kpm.io/v1
+kind: Catalog
+
+extraAnnotations:
+  org.opencontainers.image.source: github.com${repo##ghcr.io}
+
+imageReference: $repo:$p-catalog-$catalogTag
+cacheFormat: none
+source:
+  sourceType: legacy
+  legacy:
+    bundleRoot: $operatorsDir/$p
+    bundleImageReference: $repo:$p-bundle-{.Version}
+EOF
+	else
+
 	cat << EOF > $specFile
 apiVersion: specs.kpm.io/v1
 kind: Catalog
@@ -47,6 +71,7 @@ source:
     bundleImageReference: $repo:$p-bundle-{.Version}
 
 EOF
+	fi
 	kpm build catalog $specFile -o $kpmDir
 
 	kpmFile=$(ls $kpmDir/$(basename "$repo")-$p-catalog-$catalogTag.catalog.kpm)
@@ -55,6 +80,24 @@ EOF
 	kpm render $kpmFile > $catalogDir/$p/catalog.json
 done
 
+if [[ "$repo" == ghcr.io* ]]; then
+cat << EOF > $kpmSpecDir/catalog.kpmspec.yaml
+apiVersion: specs.kpm.io/v1
+kind: Catalog
+
+imageReference: $repo:$catalogTag
+extraAnnotations:
+  org.opencontainers.image.source: github.com${repo##ghcr.io}
+
+cacheFormat: pogreb.v1
+migrationLevel: all
+
+source:
+  sourceType: fbc
+  fbc:
+    catalogRoot: $catalogDir
+EOF
+else
 cat << EOF > $kpmSpecDir/catalog.kpmspec.yaml
 apiVersion: specs.kpm.io/v1
 kind: Catalog
@@ -69,4 +112,5 @@ source:
   fbc:
     catalogRoot: $catalogDir
 EOF
+fi
 kpm build catalog $kpmSpecDir/catalog.kpmspec.yaml -o $kpmDir

@@ -53,19 +53,19 @@ jobs:
         run: (cd kpm && make install)
           
       - name: Cache
-        id: cache
-        uses: actions/cache@v4
+        id: cache-restore
+        uses: actions/cache/restore@v4
         with:
-          path: ./catalog
+          path: ${{ env.CATALOG_DIR }}
           key: ${{ env.CACHE_KEY }}
 
-      - if: steps.cache.outputs.cache-hit == 'true'
+      - if: steps.cache-restore.outputs.cache-hit == 'true'
         run: |
           echo "KPM_PACKAGES=CHANGED" >> $GITHUB_ENV
           echo "SINCE_COMMIT=$(cat $CATALOG_DIR/commit)" >> $GITHUB_ENV
           echo "/commit" >> ${{ env.CATALOG_DIR }}/.indexignore
           
-      - if: steps.cache.outputs.cache-hit != 'true'
+      - if: steps.cache-restore.outputs.cache-hit != 'true'
         run: echo "KPM_PACKAGES=ALL" >> $GITHUB_ENV        
 
       - name: Run kpm build script
@@ -82,3 +82,10 @@ jobs:
         run: |
           echo "/commit" >> ${{ env.CATALOG_DIR }}/.indexignore
           echo ${{ steps.catalog-repo.outputs.commit }} > ${{ env.CATALOG_DIR }}/commit
+
+      - name: Save catalog updates
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.CATALOG_DIR }}
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}

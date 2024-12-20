@@ -74,13 +74,13 @@ jobs:
             ${{ steps.restore-keys.outputs.keys }}
             catalogs-main
 
-      - if: steps.cache-restore.outputs.cache-hit == 'true'
+      - if: steps.cache-restore.outputs.cache-matched-key != ''
         run: |
           echo "KPM_PACKAGES=CHANGED" >> $GITHUB_ENV
           echo "SINCE_COMMIT=$(cat $CATALOG_DIR/commit)" >> $GITHUB_ENV
           echo "/commit" >> ${{ env.CATALOG_DIR }}/.indexignore
           
-      - if: steps.cache-restore.outputs.cache-hit != 'true'
+      - if: steps.cache-restore.outputs.cache-matched-key == ''
         run: echo "KPM_PACKAGES=ALL" >> $GITHUB_ENV        
 
       - name: Run kpm build script

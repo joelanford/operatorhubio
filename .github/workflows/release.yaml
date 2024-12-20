@@ -89,6 +89,8 @@ jobs:
       - name: Push updated artifacts to registry
         if: github.event_name == 'push' || github.event_name == 'schedule'
         run: |
+          [[ ! -d "kpms" ]] && exit 0
+          
           echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           kpm push kpms/*.bundle.kpm
           kpm push kpms/*.catalog.kpm

@@ -44,9 +44,10 @@ jobs:
         id: restore-keys
         run: |
           (cd community-operators && git log -n 100 --pretty=format:"catalog-%H") > keys.txt
-          echo 'keys<<EOF' >> $GITHUB_OUTPUT
+          echo "keys<<EOF" >> $GITHUB_OUTPUT
           cat keys.txt >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Checkout kpm
         uses: actions/checkout@v4

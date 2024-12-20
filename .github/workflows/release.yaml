@@ -43,9 +43,9 @@ jobs:
       - name: Generate restore keys
         id: restore-keys
         run: |
-          echo 'RESTORE_KEYS<<EOF' >> $GITHUB_OUTPUT
+          echo RESTORE_KEYS<<EOF >> $GITHUB_OUTPUT
           (cd community-operators && git log -n 100 --pretty=format:"catalog-%H") >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
+          echo EOF >> $GITHUB_OUTPUT
 
       - name: Checkout kpm
         uses: actions/checkout@v4

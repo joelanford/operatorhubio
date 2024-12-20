@@ -15,7 +15,6 @@ jobs:
     env:
       GO_VERSION: 1.23
       BRANCH_NAME: ${{ github.ref_name }}
-      CACHE_KEY_BASE: catalogs
 
       REPO: ghcr.io/${{ github.repository }}
       CATALOG_TAG: latest
@@ -39,7 +38,14 @@ jobs:
 
       - name: Set cache key
         run:
-          echo "CACHE_KEY=${{ env.CACHE_KEY_BASE }}-${{ steps.catalog-repo.outputs.commit }}" >> $GITHUB_ENV
+          echo "CACHE_KEY=catalog-${{ steps.catalog-repo.outputs.commit }}" >> $GITHUB_ENV
+
+      - name: Generate restore keys
+        id: restore-keys
+        run: |
+          echo 'RESTORE_KEYS<<EOF' >> $GITHUB_OUTPUT
+          (cd community-operators && git log -n 100 --pretty=format:"catalog-%H") >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
 
       - name: Checkout kpm
         uses: actions/checkout@v4
@@ -62,6 +68,9 @@ jobs:
         with:
           path: ${{ env.CATALOG_DIR }}
           key: ${{ env.CACHE_KEY }}
+          restore-keys: |
+            ${{ steps.restore-keys.outputs.RESTORE_KEYS }}
+            catalogs-main
 
       - if: steps.cache-restore.outputs.cache-hit == 'true'
         run: |

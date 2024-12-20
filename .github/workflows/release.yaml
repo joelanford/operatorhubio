@@ -43,7 +43,7 @@ jobs:
       - name: Generate restore keys
         id: restore-keys
         run: |
-          (cd community-operators && git log -n 9 --pretty=format:"catalog-%H") > keys.txt
+          (cd community-operators && git log HEAD~ -n 8 --pretty=format:"catalog-%H") > keys.txt
           echo "keys<<EOF" >> $GITHUB_OUTPUT
           cat keys.txt >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT

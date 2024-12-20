@@ -63,11 +63,13 @@ jobs:
         run: |
           echo "KPM_PACKAGES=CHANGED" >> $GITHUB_ENV
           echo "SINCE_COMMIT=$(cat $CATALOG_DIR/commit)" >> $GITHUB_ENV
+          echo "/commit" >> ${{ env.CATALOG_DIR }}/.indexignore
           
       - if: steps.cache.outputs.cache-hit != 'true'
         run: echo "KPM_PACKAGES=ALL" >> $GITHUB_ENV        
 
-      - run: ./community-operators-pipeline/kpm.sh
+      - name: Run kpm build script
+        run: ./community-operators-pipeline/kpm.sh
 
       - name: Push updated artifacts to registry
         if: github.event_name == 'push' || github.event_name == 'schedule'
@@ -76,4 +78,7 @@ jobs:
           kpm push kpms/*.bundle.kpm
           kpm push kpms/*.catalog.kpm
 
-      - run: echo ${{ steps.catalog-repo.outputs.commit }} > ${{ env.CATALOG_DIR }}/commit
+      - name: Write operators commit to catalog dir
+        run: |
+          echo "/commit" >> ${{ env.CATALOG_DIR }}/.indexignore
+          echo ${{ steps.catalog-repo.outputs.commit }} > ${{ env.CATALOG_DIR }}/commit

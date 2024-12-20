@@ -15,7 +15,7 @@ jobs:
     env:
       GO_VERSION: 1.23
       BRANCH_NAME: ${{ github.ref_name }}
-      CACHE_KEY: catalogs-${{ github.ref_name }}
+      CACHE_KEY_BASE: catalogs
 
       REPO: ghcr.io/${{ github.repository }}
       CATALOG_TAG: latest
@@ -36,6 +36,10 @@ jobs:
           repository: k8s-operatorhub/community-operators
           path: community-operators
           fetch-depth: 0
+
+      - name: Set cache key
+        run:
+          echo "CACHE_KEY=${{ env.CACHE_KEY_BASE }}-${{ steps.catalog-repo.outputs.commit }}" >> $GITHUB_ENV
 
       - name: Checkout kpm
         uses: actions/checkout@v4

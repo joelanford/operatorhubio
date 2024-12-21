@@ -6,7 +6,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '*/15 * * * *' # Runs every 15m
+    - cron: '0 * * * *' # Run every hour
 
 jobs:
   run-kpm:
@@ -95,10 +95,10 @@ jobs:
           kpm push kpms/*.catalog.kpm
           echo "/commit" >> ${{ env.CATALOG_DIR }}/.indexignore
           echo ${{ steps.catalog-repo.outputs.commit }} > ${{ env.CATALOG_DIR }}/commit
-          echo "saveCache=true" >> $GITHUB_OUTPUT
+          echo "save-cache=true" >> $GITHUB_OUTPUT
 
       - name: Save catalog updates
-        if: steps.cache-restore.outputs.cache-hit != 'true' && steps.push.outputs.saveCache == 'true'
+        if: steps.cache-restore.outputs.cache-hit != 'true' && steps.push.outputs.save-cache == 'true'
         uses: actions/cache/save@v4
         with:
           path: ${{ env.CATALOG_DIR }}

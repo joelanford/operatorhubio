@@ -1,6 +1,9 @@
 # OperatorHub
 
-![example workflow](https://github.com/joelanford/operatorhubio/actions/workflows/release.yaml/badge.svg)
+
+<a href="https://github.com/joelanford/operatorhubio/actions/workflows/release.yaml?query=event%3Aschedule+branch%3Amain">
+  <img src="https://github.com/joelanford/operatorhubio/actions/workflows/release.yaml/badge.svg?branch=main&event=schedule" alt="release.yaml workflow status"/>
+</a>
 
 This repository consists of a single GitHub workflow and a single script that builds an alternate version of the OperatorHub.io catalog.
 
